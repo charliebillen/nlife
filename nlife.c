@@ -32,6 +32,18 @@ int **grid_create()
     return grid;
 }
 
+void grid_free(int **grid)
+{
+    int rows = grid_rows();
+
+    for (int y = 0; y < rows; y++)
+    {
+        free(grid[y]);
+    }
+
+    free(grid);
+}
+
 int **grid_next(int **grid)
 {
     int rows = grid_rows();
@@ -45,88 +57,21 @@ int **grid_next(int **grid)
         {
             int neighbours = 0;
 
-            // top row
-            if (y == 0)
+            // count the alive neighbours
+            for (int n_y = -1; n_y <= 1; n_y++)
             {
-                // first column
-                if (x == 0)
+                for (int n_x = -1; n_x <= 1; n_x++)
                 {
-                    neighbours += grid[y][x + 1];
-                    neighbours += grid[y + 1][x];
-                    neighbours += grid[y + 1][x + 1];
-                }
-                // last column
-                else if (x == cols - 1)
-                {
-                    neighbours += grid[y + 1][x];
-                    neighbours += grid[y + 1][x - 1];
-                    neighbours += grid[y][x - 1];
-                }
-                else
-                {
-                    neighbours += grid[y][x - 1];
-                    neighbours += grid[y][x + 1];
-                    neighbours += grid[y + 1][x - 1];
-                    neighbours += grid[y + 1][x];
-                    neighbours += grid[y + 1][x + 1];
-                }
-            }
-            // bottom row
-            else if (y == rows - 1)
-            {
-                // first column
-                if (x == 0)
-                {
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x + 1];
-                    neighbours += grid[y][x + 1];
-                }
-                // last column
-                else if (x == cols - 1)
-                {
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x - 1];
-                    neighbours += grid[y][x - 1];
-                }
-                else
-                {
-                    neighbours += grid[y][x - 1];
-                    neighbours += grid[y - 1][x - 1];
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x + 1];
-                    neighbours += grid[y][x + 1];
-                }
-            }
-            else
-            {
-                // first column
-                if (x == 0)
-                {
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x + 1];
-                    neighbours += grid[y][x + 1];
-                    neighbours += grid[y + 1][x + 1];
-                    neighbours += grid[y + 1][x];
-                }
-                // last column
-                else if (x == cols - 1)
-                {
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x - 1];
-                    neighbours += grid[y][x - 1];
-                    neighbours += grid[y + 1][x - 1];
-                    neighbours += grid[y + 1][x];
-                }
-                else
-                {
-                    neighbours += grid[y - 1][x - 1];
-                    neighbours += grid[y - 1][x];
-                    neighbours += grid[y - 1][x + 1];
-                    neighbours += grid[y][x - 1];
-                    neighbours += grid[y][x + 1];
-                    neighbours += grid[y + 1][x - 1];
-                    neighbours += grid[y + 1][x];
-                    neighbours += grid[y + 1][x + 1];
+                    // skip the current cell
+                    if (n_y == 0 && n_x == 0)
+                    {
+                        continue;
+                    }
+
+                    int neighbour_y = (y + n_y + rows) % rows;
+                    int neighbour_x = (x + n_x + cols) % cols;
+
+                    neighbours += grid[neighbour_y][neighbour_x];
                 }
             }
 
@@ -139,21 +84,9 @@ int **grid_next(int **grid)
         }
     }
 
-    free(grid);
+    grid_free(grid);
 
     return new_grid;
-}
-
-void grid_free(int **grid)
-{
-    int rows = grid_rows();
-
-    for (int y = 0; y < rows; y++)
-    {
-        free(grid[y]);
-    }
-
-    free(grid);
 }
 
 void grid_draw(int **grid)
