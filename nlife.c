@@ -1,31 +1,27 @@
 #include <curses.h>
 #include <stdlib.h>
+#include <time.h>
 
-int grid_rows(void)
-{
-    // account for top and bottom border
-    return LINES - 2;
-}
+int rows;
+int cols;
 
-int grid_cols(void)
+int **grid_create(int seed)
 {
-    // account for left and right border
-    return COLS - 2;
-}
-
-int **grid_create(void)
-{
-    int rows = grid_rows();
-    int cols = grid_cols();
+    srand(seed);
 
     int **grid = malloc(rows * sizeof(int *));
 
     for (int y = 0; y < rows; y++)
     {
         grid[y] = malloc(cols * sizeof(int));
-        for (int x = 0; x < cols; x++)
+
+        if (seed > 0)
         {
-            grid[y][x] = rand() % 2;
+            // Randomly populate row
+            for (int x = 0; x < cols; x++)
+            {
+                grid[y][x] = rand() % 2;
+            }
         }
     }
 
@@ -34,8 +30,6 @@ int **grid_create(void)
 
 void grid_free(int **grid)
 {
-    int rows = grid_rows();
-
     for (int y = 0; y < rows; y++)
     {
         free(grid[y]);
@@ -46,23 +40,28 @@ void grid_free(int **grid)
 
 int **grid_next(int **grid)
 {
-    int rows = grid_rows();
-    int cols = grid_cols();
-
-    int **new_grid = grid_create();
+    int **new_grid = grid_create(0);
 
     for (int y = 0; y < rows; y++)
     {
         for (int x = 0; x < cols; x++)
         {
-            int neighbours = 0;
+            /*
+             * Count the living neighbours around [y,x], wrapping at the screen
+             * edges
+             *
+             *   [y-1, x-1] [y-1, x] [y-1, x+1]
+             *   [y,   x-1] [y,   x] [y,   x+1]
+             *   [y+1, x-1] [y+1, x] [y+1, x+1]
+             *
+             */
+            int live_neighbours = 0;
 
-            // count the alive neighbours
             for (int n_y = -1; n_y <= 1; n_y++)
             {
                 for (int n_x = -1; n_x <= 1; n_x++)
                 {
-                    // skip the current cell
+                    // Skip the current cell
                     if (n_y == 0 && n_x == 0)
                     {
                         continue;
@@ -71,16 +70,23 @@ int **grid_next(int **grid)
                     int neighbour_y = (y + n_y + rows) % rows;
                     int neighbour_x = (x + n_x + cols) % cols;
 
-                    neighbours += grid[neighbour_y][neighbour_x];
+                    live_neighbours += grid[neighbour_y][neighbour_x];
                 }
             }
 
             int alive = grid[y][x];
 
-            new_grid[y][x] = (!alive && neighbours == 3) ? 1
-                             : (alive && (neighbours < 2 || neighbours > 3))
-                                 ? 0
-                                 : alive;
+            /*
+             * Rules of Game of Life:
+             * - If a dead cell has exactly 3 living neighbours it lives
+             * - If a living cell has 2 or 3 living neighbours it lives
+             * - Otherwise it dies
+             */
+            new_grid[y][x] =
+                (!alive && live_neighbours == 3) ? 1
+                : (alive && (live_neighbours < 2 || live_neighbours > 3))
+                    ? 0
+                    : alive;
         }
     }
 
@@ -91,9 +97,6 @@ int **grid_next(int **grid)
 
 void grid_draw(int **grid)
 {
-    int rows = grid_rows();
-    int cols = grid_cols();
-
     for (int y = 0; y < rows; y++)
     {
         for (int x = 0; x < cols; x++)
@@ -114,18 +117,19 @@ int main(void)
     nodelay(stdscr, TRUE);
     box(stdscr, 0, 0);
 
-    int **grid = grid_create();
+    // Account for the border on each side
+    rows = LINES - 2;
+    cols = COLS - 2;
+    int **grid = grid_create(time(NULL));
 
     char i = '\0';
-    while (i != 'q')
+    while ((i = getch()) != 'q')
     {
         grid_draw(grid);
         grid = grid_next(grid);
 
-        // ~30 fps
-        napms(34);
-
-        i = getch();
+        // ~24 FPS - Cinematic!
+        napms(42);
     }
 
     endwin();
