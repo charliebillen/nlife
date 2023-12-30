@@ -1,19 +1,19 @@
 #include <curses.h>
 #include <stdlib.h>
 
-int grid_rows()
+int grid_rows(void)
 {
     // account for top and bottom border
     return LINES - 2;
 }
 
-int grid_cols()
+int grid_cols(void)
 {
     // account for left and right border
     return COLS - 2;
 }
 
-int **grid_create()
+int **grid_create(void)
 {
     int rows = grid_rows();
     int cols = grid_cols();
@@ -106,7 +106,7 @@ void grid_draw(int **grid)
     refresh();
 }
 
-int main()
+int main(void)
 {
     initscr();
     noecho();
@@ -122,7 +122,8 @@ int main()
         grid_draw(grid);
         grid = grid_next(grid);
 
-        napms(1000);
+        // ~30 fps
+        napms(34);
 
         i = getch();
     }

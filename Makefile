@@ -1,7 +1,8 @@
+CFLAGS=-Wall -Wextra -Werror -pedantic -std=c99
 LDLIBS=-lncurses
 
-build: nlife.c
-	$(CC) -o nlife nlife.c $(LDLIBS)
+nlife: nlife.c
+	$(CC) $(CFLAGS) -o nlife nlife.c $(LDLIBS)
 
 clean:
 	rm nlife
