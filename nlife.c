@@ -1,19 +1,20 @@
 #include <curses.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
 
 int rows;
 int cols;
 
-int **grid_create(int seed)
+uint8_t **grid_create(const int seed)
 {
     srand(seed);
 
-    int **grid = malloc(rows * sizeof(int *));
+    uint8_t **grid = malloc(rows * sizeof(uint8_t *));
 
     for (int y = 0; y < rows; y++)
     {
-        grid[y] = malloc(cols * sizeof(int));
+        grid[y] = malloc(cols * sizeof(uint8_t));
 
         if (seed > 0)
         {
@@ -28,7 +29,7 @@ int **grid_create(int seed)
     return grid;
 }
 
-void grid_free(int **grid)
+void grid_free(uint8_t **grid)
 {
     for (int y = 0; y < rows; y++)
     {
@@ -38,9 +39,9 @@ void grid_free(int **grid)
     free(grid);
 }
 
-int **grid_next(int **grid)
+uint8_t **grid_next(uint8_t **grid)
 {
-    int **new_grid = grid_create(0);
+    uint8_t **new_grid = grid_create(0);
 
     for (int y = 0; y < rows; y++)
     {
@@ -74,7 +75,7 @@ int **grid_next(int **grid)
                 }
             }
 
-            int alive = grid[y][x];
+            uint8_t current_cell = grid[y][x];
 
             /*
              * Rules of Game of Life:
@@ -82,11 +83,11 @@ int **grid_next(int **grid)
              * - If a living cell has 2 or 3 living neighbours it lives
              * - Otherwise it dies
              */
-            new_grid[y][x] =
-                (!alive && live_neighbours == 3) ? 1
-                : (alive && (live_neighbours < 2 || live_neighbours > 3))
-                    ? 0
-                    : alive;
+            new_grid[y][x] = (!current_cell && live_neighbours == 3) ? 1
+                             : (current_cell && (live_neighbours < 2 ||
+                                                    live_neighbours > 3))
+                                 ? 0
+                                 : current_cell;
         }
     }
 
@@ -95,7 +96,7 @@ int **grid_next(int **grid)
     return new_grid;
 }
 
-void grid_draw(int **grid)
+void grid_draw(uint8_t **grid)
 {
     for (int y = 0; y < rows; y++)
     {
@@ -120,7 +121,7 @@ int main(void)
     // Account for the border on each side
     rows = LINES - 2;
     cols = COLS - 2;
-    int **grid = grid_create(time(NULL));
+    uint8_t **grid = grid_create(time(NULL));
 
     char i = '\0';
     while ((i = getch()) != 'q')
